@@ -42,12 +42,14 @@ async fn write_thread(mut stream_write: WriteHalf<TcpStream>,nick: String,last_m
         print!("> ");
         stdout().flush().unwrap();
         let msg = read_line();
-        let msg = format!("[{}] {}",nick,msg).to_owned();
-        let mut last_msg = last_msg.lock().await;
-        *last_msg = msg.to_owned();
-        match stream_write.write(msg.as_bytes()).await {
-            Ok(_) => {},
-            Err(_) => break
+        if msg.len() != 0 {
+            let msg = format!("[{}] {}",nick,msg).to_owned();
+            let mut last_msg = last_msg.lock().await;
+            *last_msg = msg.to_owned();
+            match stream_write.write(msg.as_bytes()).await {
+                Ok(_) => {},
+                Err(_) => break
+            }
         }
     }
     println!("Falha ao enviar para o servidor.")
