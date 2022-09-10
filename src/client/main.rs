@@ -5,6 +5,7 @@ use std::io::prelude::*;
 use std::sync::Arc;
 use std::io::{stdin,stdout};
 use tokio::sync::Mutex;
+use std::env;
 
 fn read_line() -> String {
     let mut buffer = String::new();
@@ -54,13 +55,20 @@ async fn write_thread(mut stream_write: WriteHalf<TcpStream>,nick: String,last_m
 
 #[tokio::main]
 async fn main() {
+    let address = env::args().nth(1).unwrap_or_else(||{
+        print!("Digite o endereço ip:porta: ");
+        stdout().flush().unwrap();
+        read_line()
+    });
     print!("Digite seu nick: ");
     stdout().flush().unwrap();
     let nick = read_line();
     let last_msg = Arc::new(Mutex::new(String::new()));
-    let stream = TcpStream::connect("127.0.0.1:13371").await.unwrap();
+    println!("Conectando...");
+    let stream = TcpStream::connect(&address).await.expect(&format!("Falha ao conectar: {}",address));
     let (stream_read,stream_write) = tokio::io::split(stream);
     let (clone1,clone2) =(Arc::clone(&last_msg),Arc::clone(&last_msg));
+    println!("Conectado.");
     tokio::spawn(async {read_thread(stream_read,clone1).await});
     tokio::spawn(async {write_thread(stream_write,nick,clone2).await}).await.unwrap();
 }

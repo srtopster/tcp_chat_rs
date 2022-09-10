@@ -3,6 +3,7 @@ use tokio::io::{AsyncReadExt,AsyncWriteExt,ReadHalf,WriteHalf};
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::collections::HashMap;
+use std::env;
 
 async fn handle_client(mut client: ReadHalf<TcpStream>,addr: (String,String),heads: Arc<Mutex<HashMap<usize,WriteHalf<TcpStream>>>>,id: usize) {
     let (peer_ip,peer_port) = (addr.0,addr.1);
@@ -39,8 +40,11 @@ async fn send_all(msg: String,heads: &Arc<Mutex<HashMap<usize,WriteHalf<TcpStrea
 
 #[tokio::main]
 async fn main() {
+    let port = env::args().nth(1).unwrap_or("13371".to_owned());
+    println!("Escutando na porta: {}",port);
     let mut client_index: usize = 0;
-    let socket = TcpListener::bind("127.0.0.1:13371").await.unwrap();
+    let socket = TcpListener::bind(format!("127.0.0.1:{}",port)).await.expect("Não foi possivel escutar nessa porta.");
+    println!("Servindo...");
     let heads: Arc<Mutex<HashMap<usize,WriteHalf<TcpStream>>>> = Arc::new(Mutex::new(HashMap::new()));
     loop {
         let (client,addr) = socket.accept().await.unwrap();
